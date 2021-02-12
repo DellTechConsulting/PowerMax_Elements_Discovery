@@ -15,7 +15,6 @@ def get_storage_info():
 
     # StorageGroup Variables
     storageGroupIdList = []
-    storageGroupOutput = ""
     varStrGroupName = ""
     varStrGroupId = ""
     varNumChildStrGroups = ""
@@ -62,24 +61,22 @@ def get_storage_info():
             varStrNumVolumes = storageGroupDetails_data_json.get('num_of_vols')
 
             # Output Body - Storage Group Details
-            print('"storageGroupId" {' + '\n',
-            '  storageGroupName: ' + str(varStrGroupName) + '\n',
-            '  storageGroupId: ' +  str(varStrGroupId) + '\n',
-            '  num_of_child_sgs: ' +  str(varNumChildStrGroups) + '\n',
-            '  maskingview: ' +  str(varStrMaskingView) + '\n',
-            '  num_of_vols: ' +  str(varStrNumVolumes) + '\n',
-            '},')
-
             with open("E:\\Testing\\StorageGroupInfo.txt", encoding='utf-8', mode='a') as StorageGroupFile:
-                StorageGroupFile.write(str(storageGroupOutput))
+                print('"' + varStrGroupId + '" {' + '\n',
+                ' "storageGroupName": ' + '"' + str(varStrGroupName) + '"''\n',
+                ' "storageGroupId": ' +  '"' + str(varStrGroupId) + '"''\n',
+                ' "num_of_child_sgs": ' + '"' + str(varNumChildStrGroups) + '"''\n',
+                ' "maskingview": ' + '"' + str(varStrMaskingView) + '"''\n',
+                ' "num_of_vols": ' + '"' + str(varStrNumVolumes) + '"''\n',
+                '},', file=StorageGroupFile)
 
 
 def get_volume_info():
     
     # VolumeID Variables
     volumeId = []
-    volumeIDOutput = ""
     varVolumeEmulation = ""
+    varVolumeStorageGroup = ""
     varVolumeCapacity = 0
     varVolumeNumStrGroups = 0
     
@@ -117,19 +114,19 @@ def get_volume_info():
 
             # JSON Transformation
             volumeInfoDetails_data_json = json.loads(volumeInfoDetails_raw_data)
+            varVolumeStorageGroup = volumeInfoDetails_data_json.get('storageGroupId')
             varVolumeEmulation = volumeInfoDetails_data_json.get('emulation')
             varVolumeCapacity = volumeInfoDetails_data_json.get('cap_gb')
             varVolumeNumStrGroups = volumeInfoDetails_data_json.get('num_of_storage_groups')
 
             # Output Body - Volume Group Details
-            print('"volumeId" {' + '\n',
-            '  volumeEmulation: ' + str(varVolumeEmulation) + '\n',
-            '  volumeCapacity: ' +  str(varVolumeCapacity) + '\n',
-            '  volumeNumStorageGroups: ' +  str(varVolumeNumStrGroups) + '\n',
-            '},')
-
             with open("E:\\Testing\\VolumeInfo.txt", encoding='utf-8', mode='a') as VolumeInfo:
-                VolumeInfo.write(str(volumeIDOutput))
+                print('"volumeId" {' + '\n',
+                '  volumeEmulation: ' + str(varVolumeEmulation) + '\n',
+                '  volumeCapacity: ' +  str(varVolumeCapacity) + '\n',
+                '  volumeNumStorageGroups: ' +  str(varVolumeNumStrGroups) + '\n',
+                '},', file=VolumeInfo)
+
 
 if __name__ == "__main__":
     storageGrp_thread = threading.Thread(target=get_storage_info)
