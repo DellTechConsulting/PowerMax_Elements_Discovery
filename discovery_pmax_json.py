@@ -18,8 +18,8 @@ def get_storage_info():
     varStrGroupName = ""
     varStrGroupId = ""
     varNumChildStrGroups = 0
-    varStrMaskingView = ""
-    varStrNumVolumes = ""
+    varStrSloDetails = ""
+    varStrGrpType = ""
 
     # Get Storage Group IDs
     getStorageGrpUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/storagegroup/"
@@ -195,7 +195,6 @@ def get_portgroup_info():
     varPortGroupType = ""
     varPortGroupMaskingView = ""
     varPortGroupId = ""
-    varStorageGroupId = ""
 
     # Get PortGroup IDs
     getPortGroupIdsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/portgroup/"
