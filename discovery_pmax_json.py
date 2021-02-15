@@ -15,18 +15,16 @@ def get_storage_info():
 
     # StorageGroup Variables
     storageGroupIdList = []
-    varStrGroupName = ""
     varStrGroupId = ""
     varNumChildStrGroups = 0
     varStrSloDetails = ""
     varStrGrpType = ""
+    storageGroupBuilder = {}
 
     # Get Storage Group IDs
     getStorageGrpUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/storagegroup/"
 
     # ServiceNow Credentials
-    username = 'smc'
-    password = 'smc'
     basicAuth = 'Basic c21jOnNtYw=='
 
     # Request Headers & Response
@@ -39,8 +37,6 @@ def get_storage_info():
         # JSON Transformation
         storageGroupId_data_json = json.loads(storageGroupId_raw_data)
         storageGroupIdList = storageGroupId_data_json['storageGroupId']
-        print(storageGroupIdList)
-
 
     # Get Storage Group Details
     for each_storageGroupId in storageGroupIdList:
@@ -55,22 +51,31 @@ def get_storage_info():
             # JSON Transformation
             storageGroupDetails_data_json = json.loads(storageGroupDetails_raw_data)
             varStrGroupId = storageGroupDetails_data_json.get('storageGroupId')
-            varStrGroupName = storageGroupDetails_data_json.get('storageGroupName')
             varStrSloDetails = storageGroupDetails_data_json.get('slo')
+            varStrGrpMaskingView = storageGroupDetails_data_json.get('maskingview')
+            varStrGroupEmulation = storageGroupDetails_data_json.get('device_emulation')
+            varStrGroupSRP = storageGroupDetails_data_json.get('srp')
+            varStrGrpType = storageGroupDetails_data_json.get('type')
+            if varStrGrpType == "Child":
+                listParentStrGroups = storageGroupDetails_data_json.get('parent_storage_group')
+                varParentStrGroups = listParentStrGroups[:]
+                print(varParentStrGroups)
+                # Output Body - Storage Group Details        
+                storageGroupBuilder = {"storageGroupId": varStrGroupId, "storageSlo": varStrSloDetails, "storageGroupMaskingView": varStrGrpMaskingView, "storageGroupEmulation": varStrGroupEmulation, "storageGroupSRP": varStrGroupSRP, "storageGroupType": varStrGrpType, "storageGroupParent": varParentStrGroups}
+            else:
+                storageGroupBuilder = {"storageGroupId": varStrGroupId, "storageSlo": varStrSloDetails, "storageGroupMaskingView": varStrGrpMaskingView, "storageGroupEmulation": varStrGroupEmulation, "storageGroupSRP": varStrGroupSRP, "storageGroupType": varStrGrpType}
+            
             varNumChildStrGroups = storageGroupDetails_data_json.get('num_of_child_sgs')
             if varNumChildStrGroups > 0:
                 varNumChildStrGroups = storageGroupDetails_data_json.get('child_storage_group')
-            varStrGrpMaskingView = storageGroupDetails_data_json.get('maskingview')
-            varStrGrpType = storageGroupDetails_data_json.get('type')
-
-            # Output Body - Storage Group Details        
-            storageGroupBuilder = {"storageGroupId": varStrGroupId, "storageGroupName": varStrGroupName, "storageSlo": varStrSloDetails, "memberStorageGroups": varNumChildStrGroups, "storageGroupType": varStrGrpType, 
-            "storageGroupMaskingView": varStrGrpMaskingView}
+                # Output Body - Storage Group Details        
+                storageGroupBuilder = {"storageGroupId": varStrGroupId, "storageSlo": varStrSloDetails, "storageGroupMaskingView": varStrGrpMaskingView, "storageGroupEmulation": varStrGroupEmulation, "storageGroupSRP": varStrGroupSRP, "storageGroupType": varStrGrpType, "memberStorageGroups": varNumChildStrGroups}
+            
             jsonConverter_storageGroupBuilder = json.dumps(storageGroupBuilder, indent=2)
-            storageGroup_details = '"' + str(each_storageGroupId) + '" ' + jsonConverter_storageGroupBuilder
+            storageGroup_details = '"' + str(each_storageGroupId) + '": ' + jsonConverter_storageGroupBuilder + ','
             with open("E:\\Testing\\StorageGroupInfo.json", encoding='utf-8', mode='a') as StorageGroupInfo:
                 print(storageGroup_details, file=StorageGroupInfo)
-
+    
 
 def get_volume_info():
     
@@ -250,7 +255,7 @@ def get_hostgroup_info():
     hostGroupDetails_data_json = ""
     varHostGroupType = ""
     varHostGroupId = ""
-    varHostGroupMembers = ""
+    varHostGroupMembers = []
 
     # Get HostGroup IDs
     getHostGroupsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/hostgroup/"
@@ -287,15 +292,80 @@ def get_hostgroup_info():
             hostGroupDetails_data_json = json.loads(hostGroupDetails_raw_data)
             varHostGroupId = hostGroupDetails_data_json.get('hostGroupId')
             varHostGroupType = hostGroupDetails_data_json.get('type')
-            varHostGroupMembers = hostGroupDetails_data_json.get(['host'][0:][0])
-            varHostGroupMembersWWN = hostGroupDetails_data_json.get(['host'][0])
+            memHosts = hostGroupDetails_data_json.get('host')
+            for each_element in memHosts:
+                varHostGroupMembers.append(each_element['hostId'])
 
-            # Output Body - MaskingView Details            
-            hostGroupBuilder = {"hostGroupId": varHostGroupId, "hostGroupType": varHostGroupType, "memberInitiatorGroups": varHostGroupMembers, "memberInitiators": varHostGroupMembersWWN}
+            # Output Body - MaskingView Details
+            hostGroupBuilder = {"hostGroupId": varHostGroupId, "hostGroupType": varHostGroupType, "memberHostGroups": varHostGroupMembers}
             jsonConverter_hostGroupBuilder = json.dumps(hostGroupBuilder, indent=2)
+            print(jsonConverter_hostGroupBuilder)
+            del varHostGroupMembers[:]
             hostGroup_details = '"' + str(each_hostGroupId) + '" ' + jsonConverter_hostGroupBuilder
             with open("E:\\Testing\\HostGroupInfo.json", encoding='utf-8', mode='a') as HostGroupInfo:
                 print(hostGroup_details, file=HostGroupInfo)
+
+
+def get_pool_info():
+    
+    # SRPool ID Variables
+    srpIds = []
+    srp_data_json = ""
+    arraySRPDetails_data_json = ""
+    varSRPId = ""
+    varSRPCapacityInfo = ""
+    varSRPTotalUsableGB = 0
+    varSRPSubscribedGB = 0
+    varSRPUsedGB = 0
+    varSRPServiceLevels = []
+
+    # Get SRP IDs
+    getPoolUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/srp/"
+
+    # ServiceNow Credentials
+    username = 'smc'
+    password = 'smc'
+    basicAuth = 'Basic c21jOnNtYw=='
+
+    # Request Headers & Response
+    headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
+    response = requests.get(getPoolUrl, headers=headers, verify=False)
+    if response.status_code == 200:
+        # Printing REST API Results
+        srp_raw_data = response.content
+
+        # JSON Transformation
+        srp_data_json = json.loads(srp_raw_data)
+        srpIds = srp_data_json['srpId']
+        print(srpIds)
+
+
+    # Get SRP Details
+    for each_srpId in srpIds:
+        getSRPDetailsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/srp/" + each_srpId
+        # Request Headers & Response
+        headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
+        response = requests.get(getSRPDetailsUrl, headers=headers, verify=False)
+        if response.status_code == 200:
+            # Printing REST API Results
+            srpDetails_raw_data = response.content
+
+            # JSON Transformation
+            arraySRPDetails_data_json = json.loads(srpDetails_raw_data)
+            varSRPId = arraySRPDetails_data_json.get('srpId')
+            varSRPCapacityInfo = arraySRPDetails_data_json.get('srp_capacity')
+            varSRPTotalUsableGB = varSRPCapacityInfo['usable_total_tb'] * 1024
+            varSRPSubscribedGB = varSRPCapacityInfo['subscribed_total_tb'] * 1024
+            varSRPUsedGB = varSRPCapacityInfo['usable_used_tb'] * 1024
+            varSRPServiceLevels = arraySRPDetails_data_json.get('service_levels')
+
+            # Output Body - SRP Details            
+            poolInfoBuilder = {"poolId": varSRPId, "poolConfiguredCapacityGB": varSRPTotalUsableGB, "poolSubscribedCapacityGB": varSRPSubscribedGB, "poolUsedCapacityGB": varSRPUsedGB, "poolServiceLevels": varSRPServiceLevels}
+            jsonConverter_srpBuilder = json.dumps(poolInfoBuilder, indent=2)
+            print(jsonConverter_srpBuilder)
+            srp_details = '"' + str(each_srpId) + '" ' + jsonConverter_srpBuilder
+            with open("E:\\Testing\\PoolInfo.json", encoding='utf-8', mode='a') as PoolDetailsInfo:
+                print(srp_details, file=PoolDetailsInfo)
 
 
 if __name__ == "__main__":
@@ -304,9 +374,11 @@ if __name__ == "__main__":
     maskingView_thread = threading.Thread(target=get_maskingview_info)
     portGroup_thread = threading.Thread(target=get_portgroup_info)
     hostGroup_thread = threading.Thread(target=get_hostgroup_info)
+    srpInfo_thread = threading.Thread(target=get_pool_info())
 
     storageGrp_thread.start()
     volumeID_thread.start()
     maskingView_thread.start()
     portGroup_thread.start()
     hostGroup_thread.start()
+    srpInfo_thread.start()
