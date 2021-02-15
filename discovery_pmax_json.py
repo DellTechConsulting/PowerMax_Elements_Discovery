@@ -131,7 +131,7 @@ def get_volume_info():
             # Output Body - Volume Group Details            
             volumeBuilder = {"volumeId": each_volume_Id, "configuredSizeInGb": varVolumeCapacity, "emulation": varVolumeEmulation, "configuration": "thin", "poolId": "SRP_1", "storageGroups": varVolumeStorageGroup, "rdfGroupId": varVolumeRDFNumber}
             jsonConverter_volumeBuilder = json.dumps(volumeBuilder, indent=2)
-            volume_details = '"' + str(each_volume_Id) + '" ' + jsonConverter_volumeBuilder
+            volume_details = '"' + str(each_volume_Id) + '": ' + jsonConverter_volumeBuilder + ','
             with open("E:\\Testing\\VolumeInfo.json", encoding='utf-8', mode='a') as VolumeInfo:
                 print(volume_details, file=VolumeInfo)
 
@@ -187,7 +187,7 @@ def get_maskingview_info():
             # Output Body - MaskingView Details            
             maskingViewBuilder = {"maskingViewId": varMaskingViewId, "memberInitiatorGroup": varHostGroupId, "memberPortGroup": varPortGroupId, "memberStorageGroup": varStorageGroupId}
             jsonConverter_maskingViewBuilder = json.dumps(maskingViewBuilder, indent=2)
-            maskingView_details = '"' + str(each_maskingViewId) + '" ' + jsonConverter_maskingViewBuilder
+            maskingView_details = '"' + str(each_maskingViewId) + '": ' + jsonConverter_maskingViewBuilder + ','
             with open("E:\\Testing\\MaskingViewInfo.json", encoding='utf-8', mode='a') as MaskingViewInfo:
                print(maskingView_details, file=MaskingViewInfo)
 
@@ -243,7 +243,7 @@ def get_portgroup_info():
             portGroupBuilder = {"portGroupId": varPortGroupId, "portGroupType": varPortGroupType, "portGroupMaskingView": varPortGroupMaskingView, "memberPorts": varPortGroupMembers}
             jsonConverter_portGroupBuilder = json.dumps(portGroupBuilder, indent=2)
             print(jsonConverter_portGroupBuilder)
-            portGroup_details = '"' + str(each_portGroupId) + '" ' + jsonConverter_portGroupBuilder
+            portGroup_details = '"' + str(each_portGroupId) + '": ' + jsonConverter_portGroupBuilder + ','
             with open("E:\\Testing\\PortGroupInfo.json", encoding='utf-8', mode='a') as PortGroupInfo:
                print(portGroup_details, file=PortGroupInfo)
 
@@ -301,7 +301,7 @@ def get_hostgroup_info():
             jsonConverter_hostGroupBuilder = json.dumps(hostGroupBuilder, indent=2)
             print(jsonConverter_hostGroupBuilder)
             del varHostGroupMembers[:]
-            hostGroup_details = '"' + str(each_hostGroupId) + '" ' + jsonConverter_hostGroupBuilder
+            hostGroup_details = '"' + str(each_hostGroupId) + '": ' + jsonConverter_hostGroupBuilder + ','
             with open("E:\\Testing\\HostGroupInfo.json", encoding='utf-8', mode='a') as HostGroupInfo:
                 print(hostGroup_details, file=HostGroupInfo)
 
@@ -363,7 +363,7 @@ def get_pool_info():
             poolInfoBuilder = {"poolId": varSRPId, "poolConfiguredCapacityGB": varSRPTotalUsableGB, "poolSubscribedCapacityGB": varSRPSubscribedGB, "poolUsedCapacityGB": varSRPUsedGB, "poolServiceLevels": varSRPServiceLevels}
             jsonConverter_srpBuilder = json.dumps(poolInfoBuilder, indent=2)
             print(jsonConverter_srpBuilder)
-            srp_details = '"' + str(each_srpId) + '" ' + jsonConverter_srpBuilder
+            srp_details = '"' + str(each_srpId) + '": ' + jsonConverter_srpBuilder + ','
             with open("E:\\Testing\\PoolInfo.json", encoding='utf-8', mode='a') as PoolDetailsInfo:
                 print(srp_details, file=PoolDetailsInfo)
 
