@@ -86,13 +86,22 @@ def get_volume_info():
     varVolumeStorageGroup = ""
     varVolumeCapacity = 0
     varVolumeRDFNumber = 0
-    
+    rdfGroup_Details_Json = ""
+    rdfGroupRemoteVolumeDetails_Json = ""
+    varVolumeServicePolicy = ""
+    volumeServiceLevelDetails_data_json = ""
+    varRDFGroupNumber = 0
+    varRDFGroupMode = ""
+    varLocalVolumeId = ""
+    varRemoteVolumeId = ""
+    varRemoteRDFGroupNumber = ""
+    varRDFGroupLabel = ""
+    varRemoteSymmetrixArray = ""
+
     # Get Volume IDs
     getVolumeIDsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/volume"
 
     # ServiceNow Credentials
-    username = 'smc'
-    password = 'smc'
     basicAuth = 'Basic c21jOnNtYw=='
 
     # Request Headers & Response
@@ -107,11 +116,10 @@ def get_volume_info():
         volumeIdList = volumeId_data_json['resultList']['result']
         for each_volume_id in volumeIdList:
             volumeId.append(each_volume_id.get('volumeId'))
-    print(volumeId, len(volumeId))
-
 
     # Get VolumeID Details
     for each_volume_Id in volumeId:
+        print("Volume ID = ", each_volume_Id)
         getVolumeIDDetailsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/volume/" + each_volume_Id
         # Request Headers & Response
         headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
@@ -122,14 +130,55 @@ def get_volume_info():
 
             # JSON Transformation
             volumeInfoDetails_data_json = json.loads(volumeInfoDetails_raw_data)
-            varVolumeStorageGroup = volumeInfoDetails_data_json.get('storageGroupId')
             varVolumeEmulation = volumeInfoDetails_data_json.get('emulation')
             varVolumeCapacity = volumeInfoDetails_data_json.get('cap_gb')
-            rawVolumeRDFNumber = str(volumeInfoDetails_data_json.get(['rdfGroupId'][0]))
-            varVolumeRDFNumber = rawVolumeRDFNumber[22:24]  # ** Need an evaluation **
+            varVolumeStorageGroup = volumeInfoDetails_data_json.get('storageGroupId')
 
-            # Output Body - Volume Group Details            
-            volumeBuilder = {"volumeId": each_volume_Id, "configuredSizeInGb": varVolumeCapacity, "emulation": varVolumeEmulation, "configuration": "thin", "poolId": "SRP_1", "storageGroups": varVolumeStorageGroup, "rdfGroupId": varVolumeRDFNumber}
+            if varVolumeStorageGroup != None:
+                getVolumePolicyUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/storagegroup/" + str(varVolumeStorageGroup)
+                # Request Headers & Response
+                headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
+                response = requests.get(getVolumePolicyUrl, headers=headers, verify=False)
+                if response.status_code == 200:
+                    # Printing REST API Results
+                    volumePolicyDetails_raw_data = response.content
+                    # JSON Transformation
+                    volumeServiceLevelDetails_data_json = json.loads(volumePolicyDetails_raw_data)
+                    varVolumeServicePolicy = volumeServiceLevelDetails_data_json.get('service_level')
+
+            rawVolumeRDFNumber = volumeInfoDetails_data_json.get('rdfGroupId')
+            if rawVolumeRDFNumber != None:
+                varVolumeRDFNumber = rawVolumeRDFNumber[0]['rdf_group_number']  # ** Need an evaluation **
+                getRDFGroupDetailsUrl = "https://10.60.8.184:8443/univmax/restapi/92/replication/symmetrix/000297900850/rdf_group/" + str(varVolumeRDFNumber)
+                # Request Headers & Response
+                headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
+                response = requests.get(getRDFGroupDetailsUrl, headers=headers, verify=False)
+                if response.status_code == 200:
+                    rdfGroupDetails_raw_data = response.content
+                    rdfGroup_Details_Json = json.loads(rdfGroupDetails_raw_data)
+                    # RDF Group Variables
+                    varRDFGroupNumber = rdfGroup_Details_Json.get('rdfgNumber')
+                    varRDFGroupLabel = rdfGroup_Details_Json.get('label')
+                    varRemoteRDFGroupNumber = rdfGroup_Details_Json.get('remoteRdfgNumber')
+                    varRemoteSymmetrixArray = rdfGroup_Details_Json.get('remoteSymmetrix')
+                    varRDFGroupMode = rdfGroup_Details_Json.get('modes')
+
+                if int(varVolumeRDFNumber) > 0:
+                    getRemoteArrayVolumesUrl = getRDFGroupDetailsUrl + "/volume/" + each_volume_Id
+                    # Request Headers & Response
+                    headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
+                    response = requests.get(getRemoteArrayVolumesUrl, headers=headers, verify=False)
+                    if response.status_code == 200:
+                        rdfGroupRemoteVolumeDetails_raw_data = response.content
+                        rdfGroupRemoteVolumeDetails_Json = json.loads(rdfGroupRemoteVolumeDetails_raw_data)
+                        # RDF Group Remote Volume Variables
+                        varLocalVolumeId = rdfGroupRemoteVolumeDetails_Json.get('localVolumeName')
+                        varRemoteVolumeId = rdfGroupRemoteVolumeDetails_Json.get('remoteVolumeName')
+
+        
+            #Output Body - Volume Group Details
+            volumeBuilder = {"volumeId": each_volume_Id, "configuredSizeInGb": varVolumeCapacity, "emulation": varVolumeEmulation, "configuration": "thin", "poolId": "SRP_1", "slaPolicyId": varVolumeServicePolicy, "storageGroups": varVolumeStorageGroup, 
+            "rdfDetails": {"srdfGroupLocalId": varRDFGroupNumber, "srdfGroupRemoteId": varRemoteRDFGroupNumber, "srdfGroupLabel": varRDFGroupLabel, "srdfRemoteArray": varRemoteSymmetrixArray, "srdfGroupMode": varRDFGroupMode, "srdfLocalVolumeId": varLocalVolumeId, "srdfRemoteVolumeId": varRemoteVolumeId}}
             jsonConverter_volumeBuilder = json.dumps(volumeBuilder, indent=2)
             volume_details = '"' + str(each_volume_Id) + '": ' + jsonConverter_volumeBuilder + ','
             with open("E:\\Testing\\VolumeInfo.json", encoding='utf-8', mode='a') as VolumeInfo:
@@ -205,8 +254,6 @@ def get_portgroup_info():
     getPortGroupIdsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/portgroup/"
 
     # ServiceNow Credentials
-    username = 'smc'
-    password = 'smc'
     basicAuth = 'Basic c21jOnNtYw=='
 
     # Request Headers & Response
