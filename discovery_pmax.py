@@ -132,10 +132,13 @@ def get_volume_info():
             volumeInfoDetails_data_json = json.loads(volumeInfoDetails_raw_data)
             varVolumeEmulation = volumeInfoDetails_data_json.get('emulation')
             varVolumeCapacity = volumeInfoDetails_data_json.get('cap_gb')
-            varVolumeStorageGroup = volumeInfoDetails_data_json.get('storageGroupId')
+            rawVolumeStorageGroup = volumeInfoDetails_data_json.get('storageGroupId')
+            if rawVolumeStorageGroup != None:
+                varVolumeStorageGroup = rawVolumeStorageGroup[0]
 
             if varVolumeStorageGroup != None:
                 getVolumePolicyUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/storagegroup/" + str(varVolumeStorageGroup)
+                print(getVolumePolicyUrl)
                 # Request Headers & Response
                 headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": basicAuth}
                 response = requests.get(getVolumePolicyUrl, headers=headers, verify=False)
@@ -145,6 +148,7 @@ def get_volume_info():
                     # JSON Transformation
                     volumeServiceLevelDetails_data_json = json.loads(volumePolicyDetails_raw_data)
                     varVolumeServicePolicy = volumeServiceLevelDetails_data_json.get('service_level')
+
 
             rawVolumeRDFNumber = volumeInfoDetails_data_json.get('rdfGroupId')
             if rawVolumeRDFNumber != None:
