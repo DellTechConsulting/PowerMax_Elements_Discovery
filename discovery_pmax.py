@@ -97,6 +97,7 @@ def get_volume_info():
     varRemoteRDFGroupNumber = ""
     varRDFGroupLabel = ""
     varRemoteSymmetrixArray = ""
+    varVolumeReplicated = "No"
 
     # Get Volume IDs
     getVolumeIDsUrl = "https://10.60.8.184:8443/univmax/restapi/92/sloprovisioning/symmetrix/000297900850/volume"
@@ -152,6 +153,7 @@ def get_volume_info():
 
             rawVolumeRDFNumber = volumeInfoDetails_data_json.get('rdfGroupId')
             if rawVolumeRDFNumber != None:
+                varVolumeReplicated = "Yes"
                 varVolumeRDFNumber = rawVolumeRDFNumber[0]['rdf_group_number']  # ** Need an evaluation **
                 getRDFGroupDetailsUrl = "https://10.60.8.184:8443/univmax/restapi/92/replication/symmetrix/000297900850/rdf_group/" + str(varVolumeRDFNumber)
                 # Request Headers & Response
@@ -181,7 +183,7 @@ def get_volume_info():
 
         
             #Output Body - Volume Group Details
-            volumeBuilder = {"volumeId": each_volume_Id, "configuredSizeInGb": varVolumeCapacity, "emulation": varVolumeEmulation, "configuration": "thin", "poolId": "SRP_1", "slaPolicyId": varVolumeServicePolicy, "storageGroups": varVolumeStorageGroup, 
+            volumeBuilder = {"volumeId": each_volume_Id, "configuredSizeInGb": varVolumeCapacity, "emulation": varVolumeEmulation, "configuration": "thin", "poolId": "SRP_1", "slaPolicyId": varVolumeServicePolicy, "storageGroups": varVolumeStorageGroup, "volumeReplicated": varVolumeReplicated, 
             "rdfDetails": {"srdfGroupLocalId": varRDFGroupNumber, "srdfGroupRemoteId": varRemoteRDFGroupNumber, "srdfGroupLabel": varRDFGroupLabel, "srdfRemoteArray": varRemoteSymmetrixArray, "srdfGroupMode": varRDFGroupMode, "srdfLocalVolumeId": varLocalVolumeId, "srdfRemoteVolumeId": varRemoteVolumeId}}
             jsonConverter_volumeBuilder = json.dumps(volumeBuilder, indent=2)
             volume_details = '"' + str(each_volume_Id) + '": ' + jsonConverter_volumeBuilder + ','
